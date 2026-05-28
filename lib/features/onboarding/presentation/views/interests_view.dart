@@ -1,5 +1,6 @@
 import 'package:experience_app/features/onboarding/data/models/interests_model.dart';
 import 'package:flutter/material.dart';
+import 'package:experience_app/features/ecommerce/presentation/views/ecommerce_home_view.dart';
 
 class InterestsView extends StatefulWidget {
   const InterestsView({super.key});
@@ -76,7 +77,7 @@ class _InterestsViewState extends State<InterestsView> {
                   Expanded(
                     child: ListView.separated(
                       itemCount: interests.length,
-                      separatorBuilder: (_, __) => SizedBox(height: 14),
+                      separatorBuilder: (_, _) => SizedBox(height: 14),
                       itemBuilder: (context, index) {
                         final item = interests[index];
                         return GestureDetector(
@@ -148,7 +149,9 @@ class _InterestsViewState extends State<InterestsView> {
                 ],
               ),
             ),
-            Center(child: Text('Page in progress', style: TextStyle(fontSize: 20))),
+            Center(
+              child: EcommerceHomeView(),
+            ),
           ],
         ),
       ),

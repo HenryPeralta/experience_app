@@ -1,17 +1,18 @@
 import 'package:experience_app/features/onboarding/data/models/onboarding_model.dart';
 import 'package:experience_app/features/onboarding/presentation/views/interests_view.dart';
+import 'package:experience_app/features/onboarding/presentation/providers/onboarding_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class OnboardingView extends StatefulWidget {
+class OnboardingView extends ConsumerStatefulWidget {
   const OnboardingView({super.key});
 
   @override
-  State<OnboardingView> createState() => _OnboardingViewState();
+  ConsumerState<OnboardingView> createState() => _OnboardingViewState();
 }
 
-class _OnboardingViewState extends State<OnboardingView> {
+class _OnboardingViewState extends ConsumerState<OnboardingView> {
   final PageController _controller = PageController();
-  int currentPage = 0;
 
   final List<OnboardingModel> items = [
     OnboardingModel(
@@ -40,9 +41,7 @@ class _OnboardingViewState extends State<OnboardingView> {
         controller: _controller,
         itemCount: items.length,
         onPageChanged: (index) {
-          setState(() {
-            currentPage = index;
-          });
+          ref.read(onboardingPageProvider.notifier).state = index;
         },
         itemBuilder: (context, index) {
           final item = items[index];
@@ -72,7 +71,7 @@ class _OnboardingViewState extends State<OnboardingView> {
                             width: 10,
                             height: 10,
                             decoration: BoxDecoration(
-                              color: currentPage == dotIndex
+                                color: ref.watch(onboardingPageProvider) == dotIndex
                                   ? Colors.blue
                                   : Colors.grey.shade300,
                               shape: BoxShape.circle,
@@ -112,13 +111,14 @@ class _OnboardingViewState extends State<OnboardingView> {
                             ),
                           ),
                           onPressed: () {
-                            if (currentPage < items.length - 1) {
+                            final page = ref.read(onboardingPageProvider);
+                            if (page < items.length - 1) {
                               _controller.nextPage(
                                 duration: const Duration(milliseconds: 300),
                                 curve: Curves.ease,
                               );
                             }
-                            if (currentPage == items.length - 1) {
+                            if (page == items.length - 1) {
                               Navigator.of(context).push(
                                 MaterialPageRoute(
                                   builder: (context) => InterestsView(),
@@ -127,9 +127,9 @@ class _OnboardingViewState extends State<OnboardingView> {
                             }
                           },
                           child: Text(
-                            currentPage == items.length - 1
-                                ? "Get Started"
-                                : "Next",
+                            ref.watch(onboardingPageProvider) == items.length - 1
+                              ? "Get Started"
+                              : "Next",
                             style: TextStyle(fontSize: 18, color: Colors.white),
                           ),
                         ),
