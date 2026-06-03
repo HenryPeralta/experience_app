@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:experience_app/features/ecommerce/data/models/product_model.dart';
+import 'package:experience_app/features/ecommerce/presentation/providers/cart_provider.dart';
 
 class ProductDetailView extends ConsumerStatefulWidget {
   final ProductModel product;
@@ -317,6 +318,23 @@ class _ProductDetailViewState extends ConsumerState<ProductDetailView> {
                     ),
                   ),
                   onPressed: () {
+                    if (_selectedSize == null || _selectedColor == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Please select size and color'),
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                      return;
+                    }
+                    
+                    ref.read(cartProvider.notifier).addToCart(
+                      widget.product,
+                      1,
+                      _selectedSize!,
+                      _selectedColor!,
+                    );
+                    
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('${widget.product.title} added to bag!'),

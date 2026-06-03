@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:experience_app/features/ecommerce/presentation/providers/product_provider.dart';
+import 'package:experience_app/features/ecommerce/presentation/providers/cart_provider.dart';
 import 'package:experience_app/features/ecommerce/presentation/views/product_detail_view.dart';
+import 'package:experience_app/features/ecommerce/presentation/views/cart_view.dart';
 
 class EcommerceHomeView extends ConsumerStatefulWidget {
   const EcommerceHomeView({super.key});
@@ -73,10 +75,58 @@ class _EcommerceHomeViewState extends ConsumerState<EcommerceHomeView> {
                       SizedBox(width: 12),
                       Icon(Icons.favorite_border, size: 24, color: Colors.grey.shade600),
                       SizedBox(width: 12),
-                      CircleAvatar(
-                        radius: 18,
-                        backgroundColor: Colors.blue,
-                        child: Icon(Icons.shopping_bag, color: Colors.white, size: 18),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (context) => const CartView()),
+                          );
+                        },
+                        child: Stack(
+                          children: [
+                            CircleAvatar(
+                              radius: 18,
+                              backgroundColor: Colors.blue,
+                              child: Icon(Icons.shopping_bag, color: Colors.white, size: 18),
+                            ),
+                            Positioned(
+                              top: -4,
+                              right: -4,
+                              child: Consumer(
+                                builder: (context, ref, child) {
+                                  final cartItems = ref.watch(cartProvider);
+                                  final itemCount = cartItems.length;
+                                  
+                                  if (itemCount == 0) {
+                                    return const SizedBox.shrink();
+                                  }
+                                  
+                                  return Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: BoxDecoration(
+                                      color: Colors.red,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: Colors.white,
+                                        width: 2,
+                                      ),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        itemCount.toString(),
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
