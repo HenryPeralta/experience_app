@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:experience_app/features/ecommerce/presentation/providers/checkout_provider.dart';
 import 'package:experience_app/features/ecommerce/presentation/providers/cart_provider.dart';
+import 'package:experience_app/features/ecommerce/presentation/state/checkout_state.dart';
 
 class CheckoutView extends ConsumerWidget {
   const CheckoutView({super.key});
@@ -9,7 +10,7 @@ class CheckoutView extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final checkoutState = ref.watch(checkoutProvider);
-    final cartTotal = ref.watch(cartTotalProvider);
+    final cartTotalAsync = ref.watch(cartTotalProvider);
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -48,93 +49,105 @@ class CheckoutView extends ConsumerWidget {
           ),
         ],
       ),
-      body: Column(
-        children: [
-          // Progress Steps
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _StepIndicator(
-                  label: 'Your bag',
-                  isCompleted: true,
-                  isActive: false,
-                  onTap: () {},
-                ),
-                _StepIndicator(
-                  label: 'Shipping',
-                  isCompleted: true,
-                  isActive: false,
-                  onTap: () {},
-                ),
-                _StepIndicator(
-                  label: 'Payment',
-                  isCompleted: false,
-                  isActive: true,
-                  onTap: () {},
-                ),
-              ],
-            ),
-          ),
-          // Content
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+      body: cartTotalAsync.when(
+        data: (total) => Column(
+          children: [
+            // Progress Steps
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  if (checkoutState.currentStep == 3)
-                    _CompletionStep(total: cartTotal)
-                  else
-                    _PaymentStep(ref: ref, checkoutState: checkoutState),
-                  const SizedBox(height: 100),
+                  _StepIndicator(
+                    label: 'Your bag',
+                    isCompleted: true,
+                    isActive: false,
+                    onTap: () {},
+                  ),
+                  _StepIndicator(
+                    label: 'Shipping',
+                    isCompleted: true,
+                    isActive: false,
+                    onTap: () {},
+                  ),
+                  _StepIndicator(
+                    label: 'Payment',
+                    isCompleted: false,
+                    isActive: true,
+                    onTap: () {},
+                  ),
                 ],
               ),
             ),
-          ),
-        ],
-      ),
-      bottomSheet: checkoutState.currentStep != 3
-          ? Container(
-              color: Colors.white,
-              padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
-              child: SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                  ),
-                  onPressed: checkoutState.isProcessing
-                      ? null
-                      : () {
-                          ref.read(checkoutProvider.notifier).processPayment();
-                        },
-                  child: checkoutState.isProcessing
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                            strokeWidth: 2,
-                          ),
-                        )
-                      : Text(
-                          'Process Payment',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
+            // Content
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (checkoutState.currentStep == 3)
+                      _CompletionStep(total: total)
+                    else
+                      _PaymentStep(ref: ref, checkoutState: checkoutState),
+                    const SizedBox(height: 100),
+                  ],
                 ),
               ),
-            )
-          : null,
+            ),
+          ],
+        ),
+        loading: () => const Center(
+          child: CircularProgressIndicator(),
+        ),
+        error: (error, st) => Center(
+          child: Text('Error loading checkout: $error'),
+        ),
+      ),
+      bottomSheet: cartTotalAsync.when(
+        data: (total) => checkoutState.currentStep != 3
+            ? Container(
+                color: Colors.white,
+                padding: const EdgeInsets.only(left: 16, right: 16, top: 16, bottom: 40),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                    onPressed: checkoutState.isProcessing
+                        ? null
+                        : () {
+                            ref.read(checkoutProvider.notifier).processPayment();
+                          },
+                    child: checkoutState.isProcessing
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : const Text(
+                            'Process Payment',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              )
+            : null,
+        loading: () => null,
+        error: (error, st) => null,
+      ),
     );
   }
 }
@@ -327,10 +340,10 @@ class _PaymentStep extends ConsumerWidget {
                           const SizedBox(height: 8),
                         ],
                       );
-                    }).toList(),
+                    }),
                     GestureDetector(
                       onTap: () {
-                        // TODO: Implementar agregar nueva tarjeta
+                        //TODO: Implementar agregar nueva tarjeta
                       },
                       child: Text(
                         '+ Add new card',

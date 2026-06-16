@@ -1,71 +1,124 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:experience_app/features/ecommerce/data/models/cart_item_model.dart';
-import 'package:experience_app/features/ecommerce/data/models/product_model.dart';
+import 'package:experience_app/features/ecommerce/domain/entities/cart_item.dart';
+import 'package:experience_app/features/ecommerce/domain/entities/product.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/add_to_cart.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/clear_cart.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/get_cart_items.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/remove_from_cart.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/update_cart_quantity.dart';
+import 'dependency_injection.dart';
 
-class CartNotifier extends StateNotifier<List<CartItemModel>> {
-  CartNotifier() : super([]);
+// Cart items provider - FutureProvider for async loading
+final cartItemsProvider = FutureProvider<List<CartItem>>((ref) async {
+  final useCase = ref.watch(getCartItemsProvider);
+  return await useCase();
+});
 
-  void addToCart(ProductModel product, int quantity, String size, String color) {
-    final existingItemIndex = state.indexWhere(
-      (item) =>
-          item.product.id == product.id &&
-          item.selectedSize == size &&
-          item.selectedColor == color,
-    );
+// Cart total provider
+final cartTotalProvider = FutureProvider<double>((ref) async {
+  final useCase = ref.watch(getCartTotalProvider);
+  return await useCase();
+});
 
-    if (existingItemIndex != -1) {
-      final updatedItems = [...state];
-      updatedItems[existingItemIndex] = updatedItems[existingItemIndex].copyWith(
-        quantity: updatedItems[existingItemIndex].quantity + quantity,
+// StateNotifier to handle cart operations
+class CartNotifier extends StateNotifier<List<CartItem>> {
+  final AddToCart _addToCartUseCase;
+  final RemoveFromCart _removeFromCartUseCase;
+  final UpdateCartQuantity _updateQuantityUseCase;
+  final ClearCart _clearCartUseCase;
+  final GetCartItems _getCartItemsUseCase;
+
+  CartNotifier({
+    required AddToCart addToCartUseCase,
+    required RemoveFromCart removeFromCartUseCase,
+    required UpdateCartQuantity updateQuantityUseCase,
+    required ClearCart clearCartUseCase,
+    required GetCartItems getCartItemsUseCase,
+  }) : _addToCartUseCase = addToCartUseCase,
+       _removeFromCartUseCase = removeFromCartUseCase,
+       _updateQuantityUseCase = updateQuantityUseCase,
+       _clearCartUseCase = clearCartUseCase,
+       _getCartItemsUseCase = getCartItemsUseCase,
+       super([]);
+
+  Future<void> loadCart() async {
+    try {
+      final items = await _getCartItemsUseCase();
+      state = items;
+    } catch (e) {
+      // Handle error
+      rethrow;
+    }
+  }
+
+  Future<void> addToCart(
+    Product product,
+    int quantity,
+    String size,
+    String color,
+  ) async {
+    try {
+      final cartItem = CartItem(
+        product: product,
+        quantity: quantity,
+        selectedSize: size,
+        selectedColor: color,
       );
-      state = updatedItems;
-    } else {
-      state = [
-        ...state,
-        CartItemModel(
-          product: product,
-          quantity: quantity,
-          selectedSize: size,
-          selectedColor: color,
-        ),
-      ];
+
+      await _addToCartUseCase(cartItem);
+
+      await loadCart();
+
+      state = [...state];
+    } catch (e) {
+      rethrow;
     }
   }
 
-  void removeFromCart(CartItemModel item) {
-    state = state.where((cartItem) => cartItem != item).toList();
-  }
-
-  void updateQuantity(CartItemModel item, int newQuantity) {
-    if (newQuantity <= 0) {
-      removeFromCart(item);
-      return;
+  Future<void> removeFromCart(CartItem item) async {
+    try {
+      await _removeFromCartUseCase(item);
+      await loadCart();
+    } catch (e) {
+      rethrow;
     }
-
-    final updatedItems = state.map((cartItem) {
-      if (cartItem == item) {
-        return cartItem.copyWith(quantity: newQuantity);
-      }
-      return cartItem;
-    }).toList();
-
-    state = updatedItems;
   }
 
-  double getTotal() {
-    return state.fold(0.0, (total, item) => total + item.totalPrice);
+  Future<void> updateQuantity(CartItem item, int newQuantity) async {
+    try {
+      await _updateQuantityUseCase(item, newQuantity);
+
+      await loadCart();
+
+      state = [...state];
+    } catch (e) {
+      rethrow;
+    }
   }
 
-  void clearCart() {
-    state = [];
+  Future<void> clearCart() async {
+    try {
+      await _clearCartUseCase();
+      state = [];
+    } catch (e) {
+      rethrow;
+    }
   }
 }
 
-final cartProvider = StateNotifierProvider<CartNotifier, List<CartItemModel>>((ref) {
-  return CartNotifier();
-});
+// Cart provider
+final cartProvider = StateNotifierProvider<CartNotifier, List<CartItem>>((ref) {
+  final addToCartUseCase = ref.watch(addToCartProvider);
+  final removeFromCartUseCase = ref.watch(removeFromCartProvider);
+  final updateQuantityUseCase = ref.watch(updateCartQuantityProvider);
+  final clearCartUseCase = ref.watch(clearCartProvider);
+  final getCartItemsUseCase = ref.watch(getCartItemsProvider);
 
-final cartTotalProvider = Provider<double>((ref) {
-  final cartItems = ref.watch(cartProvider);
-  return cartItems.fold(0.0, (total, item) => total + item.totalPrice);
+  return CartNotifier(
+    addToCartUseCase: addToCartUseCase,
+    removeFromCartUseCase: removeFromCartUseCase,
+    updateQuantityUseCase: updateQuantityUseCase,
+    clearCartUseCase: clearCartUseCase,
+    getCartItemsUseCase: getCartItemsUseCase,
+  );
 });

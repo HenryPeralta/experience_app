@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:experience_app/features/ecommerce/data/models/product_model.dart';
+import 'package:experience_app/features/ecommerce/domain/entities/product.dart';
 import 'package:experience_app/features/ecommerce/presentation/providers/cart_provider.dart';
 
 class ProductDetailView extends ConsumerStatefulWidget {
-  final ProductModel product;
+  final Product product;
 
   const ProductDetailView({super.key, required this.product});
 
@@ -317,7 +317,7 @@ class _ProductDetailViewState extends ConsumerState<ProductDetailView> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
                     if (_selectedSize == null || _selectedColor == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -327,18 +327,25 @@ class _ProductDetailViewState extends ConsumerState<ProductDetailView> {
                       );
                       return;
                     }
-                    
-                    ref.read(cartProvider.notifier).addToCart(
-                      widget.product,
-                      1,
-                      _selectedSize!,
-                      _selectedColor!,
-                    );
-                    
+
+                    await ref
+                        .read(cartProvider.notifier)
+                        .addToCart(
+                          widget.product,
+                          1,
+                          _selectedSize!,
+                          _selectedColor!,
+                        );
+
+                    ref.invalidate(cartItemsProvider);
+                    ref.invalidate(cartTotalProvider);
+
+                    if (!context.mounted) return;
+
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('${widget.product.title} added to bag!'),
-                        duration: Duration(seconds: 2),
+                        duration: const Duration(seconds: 2),
                       ),
                     );
                   },
