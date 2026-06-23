@@ -79,7 +79,7 @@ class CartView extends ConsumerWidget {
                                     ),
                                 ],
                               );
-                            }).toList(),
+                            }),
                           ],
                         ),
                       ),
@@ -205,11 +205,17 @@ class _CartItemCard extends ConsumerWidget {
                     children: [
                       GestureDetector(
                         onTap: () async {
-                          if (cartItem.quantity <= 1) return;
-
-                          await ref
-                              .read(cartProvider.notifier)
-                              .updateQuantity(cartItem, cartItem.quantity - 1);
+                          if (cartItem.quantity == 1) {
+                            // Eliminar del carrito cuando la cantidad es 1
+                            await ref
+                                .read(cartProvider.notifier)
+                                .removeFromCart(cartItem);
+                          } else {
+                            // Decrementar cantidad
+                            await ref
+                                .read(cartProvider.notifier)
+                                .updateQuantity(cartItem, cartItem.quantity - 1);
+                          }
 
                           ref.invalidate(cartItemsProvider);
                           ref.invalidate(cartTotalProvider);

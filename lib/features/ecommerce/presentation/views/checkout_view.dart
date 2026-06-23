@@ -342,9 +342,7 @@ class _PaymentStep extends ConsumerWidget {
                       );
                     }),
                     GestureDetector(
-                      onTap: () {
-                        //TODO: Implementar agregar nueva tarjeta
-                      },
+                      onTap: () {},
                       child: Text(
                         '+ Add new card',
                         style: TextStyle(

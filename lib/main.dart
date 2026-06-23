@@ -1,9 +1,10 @@
-import 'package:experience_app/features/onboarding/presentation/views/onboarding_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
+
+import 'package:experience_app/features/auth/presentation/views/login_view.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,9 +29,14 @@ class MyApp extends StatelessWidget {
       title: 'Experience App',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+        ),
+        useMaterial3: true,
       ),
-      home: OnboardingView(),
+
+      // Pantalla inicial para pruebas
+      home: const LoginView(),
     );
   }
 }
