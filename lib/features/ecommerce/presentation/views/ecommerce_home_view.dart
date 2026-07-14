@@ -4,6 +4,7 @@ import 'package:experience_app/features/ecommerce/presentation/providers/product
 import 'package:experience_app/features/ecommerce/presentation/providers/cart_provider.dart';
 import 'package:experience_app/features/ecommerce/presentation/views/product_detail_view.dart';
 import 'package:experience_app/features/ecommerce/presentation/views/cart_view.dart';
+import 'package:experience_app/features/auth/presentation/providers/dependency_injection.dart';
 
 class EcommerceHomeView extends ConsumerStatefulWidget {
   const EcommerceHomeView({super.key});
@@ -92,6 +93,41 @@ class _EcommerceHomeViewState extends ConsumerState<EcommerceHomeView> {
                           ],
                         ),
                       ),
+                    ),
+                    SizedBox(width: 12),
+                    // Botón para agregar producto (solo visible para admins)
+                    Consumer(
+                      builder: (context, ref, child) {
+                        final isAdminAsync = ref.watch(isAdminProvider);
+                        return isAdminAsync.when(
+                          data: (isAdmin) {
+                            if (!isAdmin) {
+                              return SizedBox.shrink();
+                            }
+                            return GestureDetector(
+                              onTap: () {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Función de agregar producto en desarrollo')),
+                                );
+                              },
+                              child: Tooltip(
+                                message: 'Agregar Producto',
+                                child: CircleAvatar(
+                                  radius: 18,
+                                  backgroundColor: Colors.green,
+                                  child: Icon(
+                                    Icons.add,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                          loading: () => SizedBox.shrink(),
+                          error: (err, st) => SizedBox.shrink(),
+                        );
+                      },
                     ),
                     SizedBox(width: 12),
                     Icon(

@@ -1,12 +1,14 @@
 import '../../domain/entities/user_entity.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../datasources/firebase_auth_data_source.dart';
+import '../datasources/firestore_user_data_source.dart';
 import '../models/user_model.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final FirebaseAuthDataSource dataSource;
+  final FirestoreUserDataSource firestoreDataSource;
 
-  AuthRepositoryImpl(this.dataSource);
+  AuthRepositoryImpl(this.dataSource, this.firestoreDataSource);
 
   @override
   Future<UserEntity> login({
@@ -24,9 +26,18 @@ class AuthRepositoryImpl implements AuthRepository {
       throw Exception('User not found');
     }
 
-    return UserModel.fromFirebase(
+    // Obtener datos del usuario desde Firestore
+    final userData = await firestoreDataSource.getUserData(user.uid);
+
+    // El usuario debe existir en Firestore
+    if (userData == null || userData.isEmpty) {
+      throw Exception('Usuario no autorizado. Contacta al administrador.');
+    }
+
+    return UserModel.fromFirebaseAndFirestore(
       uid: user.uid,
       email: user.email ?? '',
+      userData: userData,
     );
   }
 
@@ -43,9 +54,13 @@ class AuthRepositoryImpl implements AuthRepository {
       return null;
     }
 
-    return UserModel.fromFirebase(
+    // Obtener datos del usuario desde Firestore
+    final userData = await firestoreDataSource.getUserData(user.uid);
+
+    return UserModel.fromFirebaseAndFirestore(
       uid: user.uid,
       email: user.email ?? '',
+      userData: userData,
     );
   }
 }
