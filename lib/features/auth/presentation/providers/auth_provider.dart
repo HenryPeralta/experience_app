@@ -47,6 +47,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
             password: password,
           );
 
+      // Invalidar providers cacheados para forzar recargar con los nuevos datos
+      ref.invalidate(currentUserAsyncProvider);
+      ref.invalidate(userRoleProvider);
+      ref.invalidate(isAdminProvider);
+
       state = AuthState(
         isLoading: false,
         user: user,
@@ -61,6 +66,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> logout() async {
     await ref.read(logoutUserProvider).call();
+
+    // Invalidar providers cacheados para evitar que devuelvan datos del usuario anterior
+    ref.invalidate(currentUserAsyncProvider);
+    ref.invalidate(userRoleProvider);
+    ref.invalidate(isAdminProvider);
 
     state = const AuthState();
   }

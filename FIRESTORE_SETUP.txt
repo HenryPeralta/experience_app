@@ -16,13 +16,13 @@
 //   "createdAt": "2024-01-01T00:00:00.000Z"
 // }
 //
-// Documento 2 - CUSTOMER:
+// Documento 2 - USER:
 // Collection: users
 // Document ID: [UID de henryperalta@gmail.com]
 // Contenido:
 // {
 //   "email": "henryperalta@gmail.com",
-//   "role": "customer",
+//   "role": "user",
 //   "createdAt": "2024-01-01T00:00:00.000Z"
 // }
 //
@@ -30,5 +30,5 @@
 // Firebase Console > Authentication > Users
 //
 // Alternativamente, la app creará automáticamente estos documentos
-// en el primer login de cada usuario con role "customer" por defecto.
+// en el primer login de cada usuario con role "user" por defecto.
 // Luego puedes cambiar el rol desde Firebase Console.

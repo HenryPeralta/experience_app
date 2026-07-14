@@ -57,18 +57,18 @@ final currentUserProvider = Provider<GetCurrentUser>((ref) {
 });
 
 // Provider para acceder al usuario actual con AsyncValue
-final currentUserAsyncProvider = FutureProvider<UserEntity?>((ref) async {
+final currentUserAsyncProvider = FutureProvider.autoDispose<UserEntity?>((ref) async {
   return await ref.read(currentUserProvider).call();
 });
 
 // Provider para acceder al rol del usuario actual
-final userRoleProvider = FutureProvider<UserRole?>((ref) async {
+final userRoleProvider = FutureProvider.autoDispose<UserRole?>((ref) async {
   final user = await ref.read(currentUserAsyncProvider.future);
   return user?.role;
 });
 
 // Provider para verificar si el usuario es admin
-final isAdminProvider = FutureProvider<bool>((ref) async {
+final isAdminProvider = FutureProvider.autoDispose<bool>((ref) async {
   final role = await ref.read(userRoleProvider.future);
   return role == UserRole.admin;
 });

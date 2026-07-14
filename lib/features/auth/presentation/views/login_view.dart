@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:experience_app/features/onboarding/presentation/views/onboarding_view.dart';
+import 'package:experience_app/features/admin/presentation/views/role_router_wrapper.dart';
 import '../providers/auth_provider.dart';
 
 class LoginView extends ConsumerStatefulWidget {
@@ -63,11 +63,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
             ),
           );
 
-          // Navegar al OnboardingView
+          // Navegar al RoleRouterWrapper que valida el rol
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => const OnboardingView(),
+              builder: (_) => const RoleRouterWrapper(),
             ),
           );
         }

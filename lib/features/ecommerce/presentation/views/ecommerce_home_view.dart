@@ -5,6 +5,8 @@ import 'package:experience_app/features/ecommerce/presentation/providers/cart_pr
 import 'package:experience_app/features/ecommerce/presentation/views/product_detail_view.dart';
 import 'package:experience_app/features/ecommerce/presentation/views/cart_view.dart';
 import 'package:experience_app/features/auth/presentation/providers/dependency_injection.dart';
+import 'package:experience_app/features/auth/presentation/providers/auth_provider.dart';
+import 'package:experience_app/features/auth/presentation/views/login_view.dart';
 
 class EcommerceHomeView extends ConsumerStatefulWidget {
   const EcommerceHomeView({super.key});
@@ -193,6 +195,48 @@ class _EcommerceHomeViewState extends ConsumerState<EcommerceHomeView> {
                             ),
                           ),
                         ],
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    // Botón de logout
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Cerrar Sesión'),
+                            content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  ref.read(authProvider.notifier).logout();
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const LoginView()),
+                                  );
+                                },
+                                child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Tooltip(
+                        message: 'Cerrar Sesión',
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.red,
+                          child: Icon(
+                            Icons.logout,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
                       ),
                     ),
                   ],

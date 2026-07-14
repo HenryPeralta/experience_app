@@ -19,6 +19,19 @@ class Product {
     required this.colors,
   });
 
+  factory Product.fromMap(Map<String, dynamic> map) {
+    return Product(
+      id: map['id'] as String,
+      title: map['title'] as String,
+      price: (map['price'] as num).toDouble(),
+      image: map['image'] as String,
+      category: map['category'] as String,
+      description: map['description'] as String,
+      sizes: List<String>.from(map['sizes'] as List? ?? []),
+      colors: List<String>.from(map['colors'] as List? ?? []),
+    );
+  }
+
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
