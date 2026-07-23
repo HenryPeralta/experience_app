@@ -19,6 +19,8 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
   late TextEditingController _descriptionController;
   late TextEditingController _categoryController;
   late TextEditingController _imageController;
+  late TextEditingController _sizesController;
+  late TextEditingController _colorsController;
   bool _isLoading = false;
 
   @override
@@ -29,6 +31,8 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     _descriptionController = TextEditingController();
     _categoryController = TextEditingController();
     _imageController = TextEditingController();
+    _sizesController = TextEditingController();
+    _colorsController = TextEditingController();
   }
 
   @override
@@ -38,6 +42,8 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     _descriptionController.dispose();
     _categoryController.dispose();
     _imageController.dispose();
+    _sizesController.dispose();
+    _colorsController.dispose();
     super.dispose();
   }
 
@@ -49,25 +55,48 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     setState(() => _isLoading = true);
 
     try {
+      // Parsear tallas y colores (separados por comas)
+      final sizes = _sizesController.text
+          .split(',')
+          .map((s) => s.trim())
+          .where((s) => s.isNotEmpty)
+          .toList();
+      
+      final colors = _colorsController.text
+          .split(',')
+          .map((c) => c.trim())
+          .where((c) => c.isNotEmpty)
+          .toList();
+
       final product = Product(
         id: const Uuid().v4(),
         title: _titleController.text,
         price: double.parse(_priceController.text),
         description: _descriptionController.text,
         category: _categoryController.text,
-        image: _imageController.text,
-        sizes: [],
-        colors: [],
+        image: _imageController.text.isEmpty
+            ? 'https://via.placeholder.com/300x300?text=Producto'
+            : _imageController.text,
+        sizes: sizes,
+        colors: colors,
       );
 
       final useCase = ref.read(createProductProvider);
       await useCase(product);
 
       if (!mounted) return;
+      
+      // Invalidar para que se recarguen los productos
+      ref.invalidate(adminAllProductsProvider);
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Producto agregado exitosamente')),
       );
 
+      // Esperar un poco antes de navegar para que se vea el SnackBar
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      if (!mounted) return;
       Navigator.pop(context);
     } catch (e) {
       if (!mounted) return;
@@ -166,15 +195,44 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
               TextFormField(
                 controller: _imageController,
                 decoration: InputDecoration(
-                  labelText: 'URL de Imagen',
+                  labelText: 'URL de Imagen (opcional)',
+                  hintText: 'Se usará un placeholder si no ingresas una URL',
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
                 validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'La URL de imagen es requerida';
-                  }
+                  // La imagen es opcional, no requiere validación
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _sizesController,
+                decoration: InputDecoration(
+                  labelText: 'Tallas (separadas por comas)',
+                  hintText: 'Ej: S, M, L, XL',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                validator: (value) {
+                  // Las tallas son opcionales
+                  return null;
+                },
+              ),
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _colorsController,
+                decoration: InputDecoration(
+                  labelText: 'Colores (separados por comas)',
+                  hintText: 'Ej: Rojo, Azul, Negro',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                ),
+                validator: (value) {
+                  // Los colores son opcionales
                   return null;
                 },
               ),

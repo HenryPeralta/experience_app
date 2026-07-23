@@ -4,7 +4,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/providers/dependency_injection.dart';
 import '../../../auth/presentation/views/login_view.dart';
-import '../../../ecommerce/presentation/providers/product_provider.dart';
 import '../providers/admin_providers.dart';
 import 'add_product_view.dart';
 
@@ -25,7 +24,7 @@ class AdminDashboardView extends ConsumerWidget {
           );
         }
 
-        final productsAsync = ref.watch(allProductsProvider);
+        final productsAsync = ref.watch(adminAllProductsProvider);
 
         return Scaffold(
           backgroundColor: Colors.white,

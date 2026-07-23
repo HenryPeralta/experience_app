@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:riverpod/riverpod.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../ecommerce/domain/entities/product.dart';
 import '../../data/datasources/firestore_product_data_source.dart';
@@ -43,4 +43,10 @@ final getAdminProductsProvider = FutureProvider.family<List<Product>, String>((r
 final GetAdminProductsProvider = Provider<GetAdminProducts>((ref) {
   final repository = ref.watch(adminProductRepositoryProvider);
   return GetAdminProducts(repository: repository);
+});
+
+// Provider específico para obtener productos de Firestore en el admin
+final adminAllProductsProvider = FutureProvider<List<Product>>((ref) async {
+  final useCase = ref.watch(GetAdminProductsProvider);
+  return await useCase(''); // El adminId no se usa en getAdminProducts
 });
