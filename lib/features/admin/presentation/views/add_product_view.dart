@@ -84,7 +84,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Agregar Producto'),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -184,7 +184,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
                 child: ElevatedButton(
                   onPressed: _isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.blue,
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: _isLoading

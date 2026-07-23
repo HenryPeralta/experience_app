@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/providers/dependency_injection.dart';
 import '../../../auth/presentation/views/login_view.dart';
-import '../../../ecommerce/presentation/views/cart_view.dart';
+import '../../../ecommerce/presentation/providers/product_provider.dart';
 import '../providers/admin_providers.dart';
 import 'add_product_view.dart';
 
@@ -25,173 +25,245 @@ class AdminDashboardView extends ConsumerWidget {
           );
         }
 
-        final productsAsync = ref.watch(getAdminProductsProvider(user.uid));
+        final productsAsync = ref.watch(allProductsProvider);
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text('Panel Admin'),
-            backgroundColor: Colors.green,
-            actions: [
+          backgroundColor: Colors.white,
+          body: SafeArea(
+            child: Column(
+              children: [
+              // Header igual al del usuario
               Padding(
-                padding: const EdgeInsets.all(16),
-                child: Center(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                              ),
+                              child: Icon(
+                                Icons.search,
+                                color: Colors.grey.shade600,
+                              ),
+                            ),
+                            Expanded(
+                              child: TextField(
+                                decoration: InputDecoration(
+                                  hintText: 'Search',
+                                  border: InputBorder.none,
+                                  hintStyle: TextStyle(
+                                    color: Colors.grey.shade500,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () {
+                        showDialog(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Cerrar Sesión'),
+                            content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Cancelar'),
+                              ),
+                              TextButton(
+                                onPressed: () {
+                                  ref.read(authProvider.notifier).logout();
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => const LoginView(),
+                                    ),
+                                  );
+                                },
+                                child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Tooltip(
+                        message: 'Cerrar Sesión',
+                        child: CircleAvatar(
+                          radius: 18,
+                          backgroundColor: Colors.red,
+                          child: const Icon(
+                            Icons.logout,
+                            color: Colors.white,
+                            size: 18,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+
+              // Título de Todos los Productos
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: Align(
+                  alignment: Alignment.centerLeft,
                   child: Text(
-                    user.email,
-                    style: const TextStyle(color: Colors.white),
+                    'Todos los Productos',
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
               ),
-            ],
-          ),
-          drawer: Drawer(
-            child: ListView(
-              padding: EdgeInsets.zero,
-              children: [
-                DrawerHeader(
-                  decoration: BoxDecoration(
-                    color: Colors.green,
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      const Text(
-                        'Admin Panel',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        user.email,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ListTile(
-                  leading: const Icon(Icons.shopping_cart),
-                  title: const Text('Ver Carrito'),
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => const CartView()),
-                    );
-                  },
-                ),
-                const Divider(),
-                ListTile(
-                  leading: const Icon(Icons.logout),
-                  title: const Text('Cerrar Sesión'),
-                  onTap: () {
-                    Navigator.pop(context); // Cerrar drawer primero
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Cerrar Sesión'),
-                        content: const Text('¿Estás seguro de que deseas cerrar sesión?'),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('Cancelar'),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              ref.read(authProvider.notifier).logout();
-                              Navigator.of(context).popUntil((route) => route.isFirst);
-                              Navigator.pushReplacement(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => const LoginView(),
+              const SizedBox(height: 16),
+              // Lista de productos - expandida
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: productsAsync.when(
+                    data: (products) {
+                      if (products.isEmpty) {
+                        return Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.shopping_bag_outlined,
+                                size: 64,
+                                color: Colors.grey.shade300,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'No hay productos en el sistema',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.grey.shade600,
                                 ),
-                              );
-                            },
-                            child: const Text('Cerrar Sesión', style: TextStyle(color: Colors.red)),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Mis Productos',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                productsAsync.when(
-                  data: (products) {
-                    if (products.isEmpty) {
-                      return Expanded(
-                        child: Center(
-                          child: Text('No tienes productos aún'),
-                        ),
-                      );
-                    }
-                    return Expanded(
-                      child: ListView.builder(
+                        );
+                      }
+                      return ListView.builder(
                         itemCount: products.length,
                         itemBuilder: (context, index) {
                           final product = products[index];
                           return Card(
-                            child: ListTile(
-                              leading: Image.network(
-                                product.image,
-                                width: 80,
-                                fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) {
-                                  return Container(
-                                    width: 80,
-                                    color: Colors.grey[300],
-                                    child: Icon(Icons.image_not_supported),
-                                  );
-                                },
-                              ),
-                              title: Text(product.title),
-                              subtitle: Text('\$${product.price}'),
-                              trailing: IconButton(
-                                icon: const Icon(Icons.delete, color: Colors.red),
-                                onPressed: () {
-                                  _deleteProduct(
-                                    context,
-                                    ref,
-                                    product.id,
-                                  );
-                                },
+                            margin: const EdgeInsets.only(bottom: 12),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Row(
+                                children: [
+                                  // Imagen del producto
+                                  ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      product.image,
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, __, ___) {
+                                        return Container(
+                                          width: 80,
+                                          height: 80,
+                                          decoration: BoxDecoration(
+                                            color: Colors.grey.shade200,
+                                            borderRadius: BorderRadius.circular(8),
+                                          ),
+                                          child: Icon(
+                                            Icons.image_not_supported,
+                                            color: Colors.grey.shade400,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  // Información del producto
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          product.title,
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          product.category,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Colors.grey.shade600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          '\$${product.price.toStringAsFixed(2)}',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blue,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  // Botón de eliminar
+                                  IconButton(
+                                    icon: const Icon(Icons.delete, color: Colors.red),
+                                    onPressed: () {
+                                      _deleteProduct(
+                                        context,
+                                        ref,
+                                        product.id,
+                                      );
+                                    },
+                                  ),
+                                ],
                               ),
                             ),
                           );
                         },
-                      ),
-                    );
-                  },
-                  loading: () => Expanded(
-                    child: Center(
+                      );
+                    },
+                    loading: () => const Center(
                       child: CircularProgressIndicator(),
                     ),
-                  ),
-                  error: (err, st) => Expanded(
-                    child: Center(
+                    error: (err, st) => Center(
                       child: Text('Error: $err'),
                     ),
                   ),
                 ),
-              ],
+              ),
+            ],
             ),
           ),
           floatingActionButton: FloatingActionButton(
@@ -201,14 +273,14 @@ class AdminDashboardView extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => const AddProductView()),
               );
             },
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.blue,
             child: const Icon(Icons.add),
           ),
         );
       },
       loading: () => Scaffold(
         body: Center(
-          child: CircularProgressIndicator(),
+          child: const CircularProgressIndicator(),
         ),
       ),
       error: (err, st) => Scaffold(
