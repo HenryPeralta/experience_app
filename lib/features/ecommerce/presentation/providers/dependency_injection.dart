@@ -1,10 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/cart_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/local_cart_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/local_payment_data_source.dart';
-import 'package:experience_app/features/ecommerce/data/datasources/local_product_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/payment_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/product_data_source.dart';
+import 'package:experience_app/features/ecommerce/data/datasources/firestore_product_data_source_adapter.dart';
 import 'package:experience_app/features/ecommerce/data/repositories/cart_repository_impl.dart';
 import 'package:experience_app/features/ecommerce/data/repositories/payment_repository_impl.dart';
 import 'package:experience_app/features/ecommerce/data/repositories/product_repository_impl.dart';
@@ -24,7 +25,7 @@ import 'package:experience_app/features/ecommerce/domain/usecases/update_cart_qu
 
 // ========== DataSources ==========
 final productDataSourceProvider = Provider<ProductDataSource>((ref) {
-  return LocalProductDataSource();
+  return FirestoreProductDataSourceAdapter(firestore: FirebaseFirestore.instance);
 });
 
 final cartDataSourceProvider = Provider<CartDataSource>((ref) {

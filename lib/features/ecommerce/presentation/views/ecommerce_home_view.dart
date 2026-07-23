@@ -47,8 +47,6 @@ class _EcommerceHomeViewState extends ConsumerState<EcommerceHomeView> {
   }
 
   Widget _buildHomeContent(List<dynamic> products) {
-    final perfectForYou = products.where((p) => p.category == 'Perfect for you').toList();
-    final summerProducts = products.where((p) => p.category == 'For this summer').toList();
     return Stack(
       children: [
         // Main Content
@@ -244,7 +242,7 @@ class _EcommerceHomeViewState extends ConsumerState<EcommerceHomeView> {
               ),
               SizedBox(height: 12),
 
-              // Carousel
+              // Carousel (Sin cambios)
               Container(
                 height: 220,
                 color: Colors.transparent,
@@ -304,98 +302,54 @@ class _EcommerceHomeViewState extends ConsumerState<EcommerceHomeView> {
               ),
               SizedBox(height: 24),
 
-              // Perfect for you Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'Perfect for you',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
+              // Todos los Productos de Firebase
+              if (products.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Todos los Productos',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
-                        ),
-                        Text(
-                          'See more',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
+                      SizedBox(height: 12),
+                      GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              crossAxisSpacing: 12,
+                              mainAxisSpacing: 12,
+                              childAspectRatio: 0.8,
+                            ),
+                        itemCount: products.length,
+                        itemBuilder: (context, index) {
+                          return _buildProductCard(products[index]);
+                        },
+                      ),
+                    ],
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Center(
+                    child: Text(
+                      'No hay productos disponibles',
+                      style: TextStyle(color: Colors.grey.shade600),
                     ),
-                    SizedBox(height: 12),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.8,
-                          ),
-                      itemCount: perfectForYou.length,
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(perfectForYou[index]);
-                      },
-                    ),
-                  ],
+                  ),
                 ),
-              ),
-              SizedBox(height: 24),
-
-              // For this summer Section
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          'For this summer',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        Text(
-                          'See more',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.blue,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 12),
-                    GridView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            crossAxisSpacing: 12,
-                            mainAxisSpacing: 12,
-                            childAspectRatio: 0.8,
-                          ),
-                      itemCount: summerProducts.length,
-                      itemBuilder: (context, index) {
-                        return _buildProductCard(summerProducts[index]);
-                      },
-                    ),
-                  ],
-                ),
-              ),
               SizedBox(height: 100),
             ],
           ),
