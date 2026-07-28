@@ -1,0 +1,33 @@
+// INSTRUCCIONES PARA CONFIGURAR FIREBASE STORAGE SECURITY RULES
+// ============================================================
+
+// 1. Ve a: https://console.firebase.google.com
+// 2. Selecciona tu proyecto: "experience-app"
+// 3. En la sidebar izquierda, busca "Storage" y haz clic
+// 4. En la pestaña "Rules" (debería estar al lado de "Files")
+// 5. Reemplaza el contenido actual con lo siguiente:
+
+/*
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Solo admins pueden subir productos
+    match /products/{productId}/{allPaths=**} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && 
+                      get(/databases/(default)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+  }
+}
+*/
+
+// 6. Haz clic en "Publish" (botón azul arriba a la derecha)
+// 7. Confirma que deseas publicar las reglas
+// 8. ¡Listo! Las imágenes se guardarán en Storage con permisos de admin
+
+// ESTRUCTURA DE ALMACENAMIENTO:
+// gs://experience-app-56e09.appspot.com/products/{productId}/image_{timestamp}
+
+// PERMISOS:
+// - Lectura: Cualquier usuario autenticado
+// - Escritura: Solo usuarios con role == "admin" en Firestore

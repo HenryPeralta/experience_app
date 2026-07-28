@@ -408,8 +408,17 @@ class _EcommerceHomeViewState extends ConsumerState<EcommerceHomeView> {
                 color: Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Center(
-                child: Icon(Icons.image, size: 60, color: Colors.grey.shade300),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: Image.network(
+                  product.image,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return Center(
+                      child: Icon(Icons.image, size: 60, color: Colors.grey.shade300),
+                    );
+                  },
+                ),
               ),
             ),
           ),

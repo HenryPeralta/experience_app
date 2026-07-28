@@ -63,13 +63,19 @@ class _ProductDetailViewState extends ConsumerState<ProductDetailView> {
                             _currentImagePage = index;
                           });
                         },
-                        itemCount: 4,
+                        itemCount: 1,
                         itemBuilder: (_, index) {
                           return Center(
-                            child: Icon(
-                              Icons.image,
-                              size: 120,
-                              color: Colors.grey.shade400,
+                            child: Image.network(
+                              widget.product.image,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Icon(
+                                  Icons.image,
+                                  size: 120,
+                                  color: Colors.grey.shade400,
+                                );
+                              },
                             ),
                           );
                         },
@@ -136,7 +142,7 @@ class _ProductDetailViewState extends ConsumerState<ProductDetailView> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: List.generate(
-                            4,
+                            1,
                             (index) => Container(
                               margin: const EdgeInsets.symmetric(horizontal: 4),
                               width: 8,

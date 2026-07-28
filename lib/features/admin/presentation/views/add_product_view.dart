@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
+import 'dart:io';
 
 import '../../../ecommerce/domain/entities/product.dart';
 import '../providers/admin_providers.dart';
@@ -18,9 +20,9 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
   late TextEditingController _priceController;
   late TextEditingController _descriptionController;
   late TextEditingController _categoryController;
-  late TextEditingController _imageController;
   late TextEditingController _sizesController;
   late TextEditingController _colorsController;
+  File? _selectedImage;
   bool _isLoading = false;
 
   @override
@@ -30,7 +32,6 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     _priceController = TextEditingController();
     _descriptionController = TextEditingController();
     _categoryController = TextEditingController();
-    _imageController = TextEditingController();
     _sizesController = TextEditingController();
     _colorsController = TextEditingController();
   }
@@ -41,10 +42,20 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     _priceController.dispose();
     _descriptionController.dispose();
     _categoryController.dispose();
-    _imageController.dispose();
     _sizesController.dispose();
     _colorsController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      setState(() {
+        _selectedImage = File(pickedFile.path);
+      });
+    }
   }
 
   Future<void> _submitForm() async {
@@ -55,6 +66,16 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     setState(() => _isLoading = true);
 
     try {
+      // Generar ID del producto primero
+      final productId = const Uuid().v4();
+
+      // Subir imagen a Firebase Storage si existe
+      String imageUrl = 'https://via.placeholder.com/300x300?text=Producto';
+      if (_selectedImage != null) {
+        final uploadUseCase = ref.read(uploadProductImageProvider);
+        imageUrl = await uploadUseCase(_selectedImage!, productId);
+      }
+
       // Parsear tallas y colores (separados por comas)
       final sizes = _sizesController.text
           .split(',')
@@ -69,14 +90,12 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
           .toList();
 
       final product = Product(
-        id: const Uuid().v4(),
+        id: productId,
         title: _titleController.text,
         price: double.parse(_priceController.text),
         description: _descriptionController.text,
         category: _categoryController.text,
-        image: _imageController.text.isEmpty
-            ? 'https://via.placeholder.com/300x300?text=Producto'
-            : _imageController.text,
+        image: imageUrl,
         sizes: sizes,
         colors: colors,
       );
@@ -192,19 +211,67 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
                 },
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _imageController,
-                decoration: InputDecoration(
-                  labelText: 'URL de Imagen (opcional)',
-                  hintText: 'Se usará un placeholder si no ingresas una URL',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+              // Sección de Imagen
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(8),
                 ),
-                validator: (value) {
-                  // La imagen es opcional, no requiere validación
-                  return null;
-                },
+                child: Column(
+                  children: [
+                    // Mostrar imagen seleccionada
+                    if (_selectedImage != null)
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        child: Image.file(
+                          _selectedImage!,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    else
+                      Container(
+                        width: double.infinity,
+                        height: 200,
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.image,
+                              size: 50,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Sin imagen seleccionada',
+                              style: TextStyle(color: Colors.grey.shade600),
+                            ),
+                          ],
+                        ),
+                      ),
+                    // Botón para seleccionar imagen
+                    Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: _pickImage,
+                          icon: const Icon(Icons.photo_library),
+                          label: const Text('Seleccionar Imagen'),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               TextFormField(
