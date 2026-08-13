@@ -1,14 +1,17 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:experience_app/features/core/data/services/local_notification_service.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/cart_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/local_cart_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/local_payment_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/payment_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/product_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/firestore_product_data_source_adapter.dart';
+import 'package:experience_app/features/ecommerce/data/datasources/order_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/repositories/cart_repository_impl.dart';
 import 'package:experience_app/features/ecommerce/data/repositories/payment_repository_impl.dart';
 import 'package:experience_app/features/ecommerce/data/repositories/product_repository_impl.dart';
+import 'package:experience_app/features/ecommerce/data/repositories/order_repository.dart';
 import 'package:experience_app/features/ecommerce/domain/repositories/cart_repository.dart';
 import 'package:experience_app/features/ecommerce/domain/repositories/payment_repository.dart';
 import 'package:experience_app/features/ecommerce/domain/repositories/product_repository.dart';
@@ -22,6 +25,13 @@ import 'package:experience_app/features/ecommerce/domain/usecases/get_products_b
 import 'package:experience_app/features/ecommerce/domain/usecases/process_payment.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/remove_from_cart.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/update_cart_quantity.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/create_order_use_case.dart';
+
+// ========== Services ==========
+final localNotificationServiceProvider =
+    Provider<LocalNotificationService>((ref) {
+  return LocalNotificationServiceImpl();
+});
 
 // ========== DataSources ==========
 final productDataSourceProvider = Provider<ProductDataSource>((ref) {
@@ -96,6 +106,21 @@ final clearCartProvider = Provider<ClearCart>((ref) {
 final getPaymentCardsProvider = Provider<GetPaymentCards>((ref) {
   final repository = ref.watch(paymentRepositoryProvider);
   return GetPaymentCards(repository);
+});
+
+// ========== Order Providers ==========
+final orderDataSourceProvider = Provider<OrderDataSource>((ref) {
+  return OrderDataSourceImpl(firestore: FirebaseFirestore.instance);
+});
+
+final orderRepositoryProvider = Provider<OrderRepository>((ref) {
+  final dataSource = ref.watch(orderDataSourceProvider);
+  return OrderRepositoryImpl(dataSource: dataSource);
+});
+
+final createOrderProvider = Provider<CreateOrderUseCase>((ref) {
+  final repository = ref.watch(orderRepositoryProvider);
+  return CreateOrderUseCaseImpl(repository: repository);
 });
 
 final processPaymentProvider = Provider<ProcessPayment>((ref) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:experience_app/features/ecommerce/presentation/providers/checkout_provider.dart';
 import 'package:experience_app/features/ecommerce/presentation/providers/cart_provider.dart';
+import 'package:experience_app/features/ecommerce/presentation/providers/dependency_injection.dart';
 import 'package:experience_app/features/ecommerce/presentation/state/checkout_state.dart';
 
 class CheckoutView extends ConsumerWidget {
@@ -11,6 +12,13 @@ class CheckoutView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final checkoutState = ref.watch(checkoutProvider);
     final cartTotalAsync = ref.watch(cartTotalProvider);
+
+    // Cargar tarjetas de pago cuando la pantalla se abre
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (checkoutState.paymentCards.isEmpty) {
+        ref.read(checkoutProvider.notifier).loadPaymentCards();
+      }
+    });
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -121,8 +129,109 @@ class CheckoutView extends ConsumerWidget {
                     ),
                     onPressed: checkoutState.isProcessing
                         ? null
-                        : () {
-                            ref.read(checkoutProvider.notifier).processPayment();
+                        : () async {
+                            try {
+                              final orderId = await ref
+                                  .read(checkoutProvider.notifier)
+                                  .processPayment();
+
+                              // Mostrar notificación local
+                              final notificationService =
+                                  ref.read(localNotificationServiceProvider);
+                              await notificationService.showNotification(
+                                id: orderId.hashCode,
+                                title: '¡Compra Realizada! 🎉',
+                                body:
+                                    'Tu orden #${orderId.substring(0, 8)} ha sido confirmada',
+                                payload: orderId,
+                              );
+
+                              // Refrescar estado del carrito
+                              ref.invalidate(cartTotalProvider);
+                              ref.invalidate(getCartItemsProvider);
+
+                              // Mostrar modal de éxito
+                              if (context.mounted) {
+                                showDialog(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      title: const Text(
+                                        'Compra Realizada',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          fontSize: 20,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      content: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(
+                                            Icons.check_circle,
+                                            color: Colors.green,
+                                            size: 64,
+                                          ),
+                                          const SizedBox(height: 16),
+                                          const Text(
+                                            '¡Gracias por tu compra!',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(fontSize: 16),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            'Orden #${orderId.substring(0, 8)}',
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontSize: 14,
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      actions: [
+                                        Center(
+                                          child: ElevatedButton(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.blue,
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                horizontal: 32,
+                                                vertical: 12,
+                                              ),
+                                            ),
+                                            onPressed: () {
+                                              Navigator.pop(context); // Cierra modal
+                                              Navigator.pop(context); // Cierra checkout
+                                              Navigator.pop(context); // Cierra cart
+                                            },
+                                            child: const Text(
+                                              'Ir al Inicio',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }
+                            } catch (e) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Error: $e'),
+                                    backgroundColor: Colors.red,
+                                  ),
+                                );
+                              }
+                            }
                           },
                     child: checkoutState.isProcessing
                         ? const SizedBox(
