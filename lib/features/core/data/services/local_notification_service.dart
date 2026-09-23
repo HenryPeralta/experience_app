@@ -34,7 +34,7 @@ class LocalNotificationServiceImpl implements LocalNotificationService {
       );
 
       await _flutterLocalNotificationsPlugin.initialize(
-        initializationSettings,
+        settings: initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
           debugPrint('📲 Local notification tapped: ${response.payload}');
           // Aquí puedes manejar cuando el usuario toca la notificación local
@@ -99,10 +99,10 @@ class LocalNotificationServiceImpl implements LocalNotificationService {
       );
 
       await _flutterLocalNotificationsPlugin.show(
-        id,
-        title,
-        body,
-        platformDetails,
+        id: id,
+        title: title,
+        body: body,
+        notificationDetails: platformDetails,
         payload: payload,
       );
 

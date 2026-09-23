@@ -7,7 +7,9 @@ import 'package:experience_app/features/ecommerce/domain/usecases/create_order_u
 import 'package:experience_app/features/ecommerce/domain/usecases/get_cart_items.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/clear_cart.dart';
 import 'package:experience_app/features/ecommerce/domain/entities/order.dart' as order_entity;
+import 'package:experience_app/features/core/data/services/notifications_service.dart';
 import 'dependency_injection.dart';
+import 'product_provider.dart'; // ✅ Importar para acceder a allProductsProvider
 
 // Payment cards provider
 final paymentCardsProvider = FutureProvider((ref) async {
@@ -21,16 +23,19 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
   final CreateOrderUseCase _createOrderUseCase;
   final GetCartItems _getCartItemsUseCase;
   final ClearCart _clearCartUseCase;
+  final Ref _ref; // ✅ Guardar ref para invalidar providers
 
   CheckoutNotifier({
     required GetPaymentCards getPaymentCardsUseCase,
     required CreateOrderUseCase createOrderUseCase,
     required GetCartItems getCartItemsUseCase,
     required ClearCart clearCartUseCase,
+    required Ref ref, // ✅ Recibir ref
   })  : _getPaymentCardsUseCase = getPaymentCardsUseCase,
         _createOrderUseCase = createOrderUseCase,
         _getCartItemsUseCase = getCartItemsUseCase,
         _clearCartUseCase = clearCartUseCase,
+        _ref = ref, // ✅ Guardar ref
         super(
           const CheckoutState(
             currentStep: 2,
@@ -81,6 +86,16 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
       final cartItems = await _getCartItemsUseCase();
       if (cartItems.isEmpty) throw Exception('El carrito está vacío');
 
+      // ✅ VALIDAR STOCK antes de procesar
+      for (final item in cartItems) {
+        if (item.quantity > item.product.quantity) {
+          throw Exception(
+            'Stock insuficiente para ${item.product.title}. '
+            'Disponible: ${item.product.quantity}, Solicitado: ${item.quantity}',
+          );
+        }
+      }
+
       // Convertir CartItem a OrderItem
       final orderItems = cartItems.map((item) {
         return order_entity.OrderItem(
@@ -111,11 +126,22 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
         paymentMethod: 'credit_card',
       );
 
-      // Guardar orden en Firestore
+      // Guardar orden en Firestore (con Batch que decrementa inventario)
       await _createOrderUseCase(order);
+
+      // Enviar notificación push al usuario
+      await NotificationsService.instance.showLocalNotification(
+        id: orderId.hashCode,
+        title: '¡Compra Realizada! 🎉',
+        body: 'Tu orden #${orderId.substring(0, 8)} ha sido confirmada',
+        payload: orderId,
+      );
 
       // Limpiar carrito
       await _clearCartUseCase();
+
+      // ✅ Invalidar provider de productos para refrescar stock
+      _ref.invalidate(allProductsProvider);
 
       // Marcar como completado
       state = state.copyWith(
@@ -145,5 +171,6 @@ final checkoutProvider = StateNotifierProvider<CheckoutNotifier, CheckoutState>(
     createOrderUseCase: createOrderUseCase,
     getCartItemsUseCase: getCartItemsUseCase,
     clearCartUseCase: clearCartUseCase,
+    ref: ref, // ✅ Pasar ref
   );
 });

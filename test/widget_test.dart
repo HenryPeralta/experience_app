@@ -7,15 +7,14 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:experience_app/main.dart';
-import 'package:experience_app/features/core/data/services/local_notification_service.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    final localNotificationService = LocalNotificationServiceImpl();
-    await tester.pumpWidget(MyApp(localNotificationService: localNotificationService));
+    await tester.pumpWidget(const ProviderScope(child: MyApp()));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

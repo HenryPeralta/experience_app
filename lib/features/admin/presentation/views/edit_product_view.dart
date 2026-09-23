@@ -1,20 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:uuid/uuid.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import '../../../ecommerce/domain/entities/product.dart';
 import '../providers/admin_providers.dart';
 
-class AddProductView extends ConsumerStatefulWidget {
-  const AddProductView({Key? key}) : super(key: key);
+class EditProductView extends ConsumerStatefulWidget {
+  final Product product;
+
+  const EditProductView({
+    Key? key,
+    required this.product,
+  }) : super(key: key);
 
   @override
-  ConsumerState<AddProductView> createState() => _AddProductViewState();
+  ConsumerState<EditProductView> createState() => _EditProductViewState();
 }
 
-class _AddProductViewState extends ConsumerState<AddProductView> {
+class _EditProductViewState extends ConsumerState<EditProductView> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _priceController;
@@ -29,13 +33,13 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
   @override
   void initState() {
     super.initState();
-    _titleController = TextEditingController();
-    _priceController = TextEditingController();
-    _descriptionController = TextEditingController();
-    _categoryController = TextEditingController();
-    _sizesController = TextEditingController();
-    _colorsController = TextEditingController();
-    _quantityController = TextEditingController();
+    _titleController = TextEditingController(text: widget.product.title);
+    _priceController = TextEditingController(text: widget.product.price.toString());
+    _descriptionController = TextEditingController(text: widget.product.description);
+    _categoryController = TextEditingController(text: widget.product.category);
+    _sizesController = TextEditingController(text: widget.product.sizes.join(', '));
+    _colorsController = TextEditingController(text: widget.product.colors.join(', '));
+    _quantityController = TextEditingController(text: widget.product.quantity.toString());
   }
 
   @override
@@ -69,14 +73,11 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
     setState(() => _isLoading = true);
 
     try {
-      // Generar ID del producto primero
-      final productId = const Uuid().v4();
-
-      // Subir imagen a Firebase Storage si existe
-      String imageUrl = 'https://via.placeholder.com/300x300?text=Producto';
+      // Si se seleccionó una nueva imagen, subirla
+      String imageUrl = widget.product.image;
       if (_selectedImage != null) {
         final uploadUseCase = ref.read(uploadProductImageProvider);
-        imageUrl = await uploadUseCase(_selectedImage!, productId);
+        imageUrl = await uploadUseCase(_selectedImage!, widget.product.id);
       }
 
       // Parsear tallas y colores (separados por comas)
@@ -92,8 +93,8 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
           .where((c) => c.isNotEmpty)
           .toList();
 
-      final product = Product(
-        id: productId,
+      final updatedProduct = Product(
+        id: widget.product.id,
         title: _titleController.text,
         price: double.parse(_priceController.text),
         description: _descriptionController.text,
@@ -104,8 +105,8 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
         quantity: int.parse(_quantityController.text),
       );
 
-      final useCase = ref.read(createProductProvider);
-      await useCase(product);
+      final useCase = ref.read(updateProductProvider);
+      await useCase(updatedProduct);
 
       if (!mounted) return;
       
@@ -113,7 +114,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
       ref.invalidate(adminAllProductsProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Producto agregado exitosamente')),
+        const SnackBar(content: Text('Producto actualizado exitosamente')),
       );
 
       // Esperar un poco antes de navegar para que se vea el SnackBar
@@ -135,7 +136,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Agregar Producto'),
+        title: const Text('Editar Producto'),
         backgroundColor: Colors.blue,
       ),
       body: SingleChildScrollView(
@@ -222,7 +223,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  hintText: 'Cantidad inicial de producto',
+                  hintText: 'Cantidad actual de producto',
                 ),
                 keyboardType: TextInputType.number,
                 validator: (value) {
@@ -246,7 +247,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
                 ),
                 child: Column(
                   children: [
-                    // Mostrar imagen seleccionada
+                    // Mostrar imagen actual o nueva
                     if (_selectedImage != null)
                       ClipRRect(
                         borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
@@ -258,27 +259,38 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
                         ),
                       )
                     else
-                      Container(
-                        width: double.infinity,
-                        height: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
-                        ),
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.image,
-                              size: 50,
-                              color: Colors.grey.shade400,
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Sin imagen seleccionada',
-                              style: TextStyle(color: Colors.grey.shade600),
-                            ),
-                          ],
+                      ClipRRect(
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                        child: Image.network(
+                          widget.product.image,
+                          width: double.infinity,
+                          height: 200,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) {
+                            return Container(
+                              width: double.infinity,
+                              height: 200,
+                              decoration: BoxDecoration(
+                                color: Colors.grey.shade100,
+                                borderRadius: const BorderRadius.vertical(top: Radius.circular(8)),
+                              ),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.image,
+                                    size: 50,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Sin imagen',
+                                    style: TextStyle(color: Colors.grey.shade600),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
                         ),
                       ),
                     // Botón para seleccionar imagen
@@ -289,7 +301,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
                         child: ElevatedButton.icon(
                           onPressed: _pickImage,
                           icon: const Icon(Icons.photo_library),
-                          label: const Text('Seleccionar Imagen'),
+                          label: const Text('Cambiar Imagen'),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Colors.blue,
                             foregroundColor: Colors.white,
@@ -349,7 +361,7 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
                           ),
                         )
                       : const Text(
-                          'Guardar Producto',
+                          'Guardar Cambios',
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                 ),

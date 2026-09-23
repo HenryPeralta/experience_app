@@ -189,6 +189,20 @@ class _ProductDetailViewState extends ConsumerState<ProductDetailView> {
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
+                                SizedBox(height: 4),
+                                // Stock disponible
+                                Text(
+                                  widget.product.quantity > 0
+                                      ? 'Stock: ${widget.product.quantity} unidades'
+                                      : 'Agotado',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    color: widget.product.quantity > 0
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
@@ -318,50 +332,61 @@ class _ProductDetailViewState extends ConsumerState<ProductDetailView> {
                 height: 56,
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blue,
+                    backgroundColor: widget.product.quantity > 0
+                        ? Colors.blue
+                        : Colors.grey,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () async {
-                    if (_selectedSize == null || _selectedColor == null) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Please select size and color'),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      return;
-                    }
+                  onPressed: widget.product.quantity > 0
+                      ? () async {
+                          if (_selectedSize == null || _selectedColor == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Please select size and color'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            return;
+                          }
 
-                    await ref
-                        .read(cartProvider.notifier)
-                        .addToCart(
-                          widget.product,
-                          1,
-                          _selectedSize!,
-                          _selectedColor!,
-                        );
+                          await ref
+                              .read(cartProvider.notifier)
+                              .addToCart(
+                                widget.product,
+                                1,
+                                _selectedSize!,
+                                _selectedColor!,
+                              );
 
-                    ref.invalidate(cartItemsProvider);
-                    ref.invalidate(cartTotalProvider);
+                          ref.invalidate(cartItemsProvider);
+                          ref.invalidate(cartTotalProvider);
 
-                    if (!context.mounted) return;
+                          if (!context.mounted) return;
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('${widget.product.title} added to bag!'),
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('${widget.product.title} added to bag!'),
+                              duration: const Duration(seconds: 2),
+                            ),
+                          );
+                        }
+                      : () {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('This product is out of stock'),
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        },
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.shopping_bag_outlined, color: Colors.white),
                       SizedBox(width: 8),
                       Text(
-                        'Add to bag',
+                        widget.product.quantity > 0 ? 'Add to bag' : 'Out of stock',
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

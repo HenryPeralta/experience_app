@@ -7,6 +7,7 @@ class Product {
   final String description;
   final List<String> sizes;
   final List<String> colors;
+  final int quantity; // Cantidad disponible en stock
 
   const Product({
     required this.id,
@@ -17,6 +18,7 @@ class Product {
     required this.description,
     required this.sizes,
     required this.colors,
+    required this.quantity,
   });
 
   factory Product.fromMap(Map<String, dynamic> map) {
@@ -29,6 +31,7 @@ class Product {
       description: map['description'] as String,
       sizes: List<String>.from(map['sizes'] as List? ?? []),
       colors: List<String>.from(map['colors'] as List? ?? []),
+      quantity: (map['quantity'] as num?)?.toInt() ?? 0, // ✅ Convierte num a int
     );
   }
 
@@ -39,8 +42,10 @@ class Product {
           runtimeType == other.runtimeType &&
           id == other.id &&
           title == other.title &&
-          price == other.price;
+          price == other.price &&
+          quantity == other.quantity;
 
   @override
-  int get hashCode => id.hashCode ^ title.hashCode ^ price.hashCode;
+  int get hashCode =>
+      id.hashCode ^ title.hashCode ^ price.hashCode ^ quantity.hashCode;
 }

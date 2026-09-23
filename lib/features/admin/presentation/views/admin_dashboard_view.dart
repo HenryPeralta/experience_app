@@ -6,6 +6,7 @@ import '../../../auth/presentation/providers/dependency_injection.dart';
 import '../../../auth/presentation/views/login_view.dart';
 import '../providers/admin_providers.dart';
 import 'add_product_view.dart';
+import 'edit_product_view.dart';
 
 class AdminDashboardView extends ConsumerWidget {
   const AdminDashboardView({Key? key}) : super(key: key);
@@ -235,16 +236,34 @@ class AdminDashboardView extends ConsumerWidget {
                                       ],
                                     ),
                                   ),
-                                  // Botón de eliminar
-                                  IconButton(
-                                    icon: const Icon(Icons.delete, color: Colors.red),
-                                    onPressed: () {
-                                      _deleteProduct(
-                                        context,
-                                        ref,
-                                        product.id,
-                                      );
-                                    },
+                                  // Botones de editar y eliminar
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(Icons.edit, color: Colors.blue),
+                                        onPressed: () {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                              builder: (_) => EditProductView(
+                                                product: product,
+                                              ),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: const Icon(Icons.delete, color: Colors.red),
+                                        onPressed: () {
+                                          _deleteProduct(
+                                            context,
+                                            ref,
+                                            product.id,
+                                          );
+                                        },
+                                      ),
+                                    ],
                                   ),
                                 ],
                               ),

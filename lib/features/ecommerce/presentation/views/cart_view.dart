@@ -217,8 +217,11 @@ class _CartItemCard extends ConsumerWidget {
                                 .updateQuantity(cartItem, cartItem.quantity - 1);
                           }
 
-                          ref.invalidate(cartItemsProvider);
-                          ref.invalidate(cartTotalProvider);
+                          // ✅ Validar que el widget aún está montado antes de invalidar
+                          if (context.mounted) {
+                            ref.invalidate(cartItemsProvider);
+                            ref.invalidate(cartTotalProvider);
+                          }
                         },
                         child: Container(
                           width: 24,
@@ -246,12 +249,31 @@ class _CartItemCard extends ConsumerWidget {
                       ),
                       GestureDetector(
                         onTap: () async {
+                          // ✅ Validar que no exceda el stock disponible
+                          final newQuantity = cartItem.quantity + 1;
+                          if (newQuantity > cartItem.product.quantity) {
+                            if (context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Solo hay ${cartItem.product.quantity} disponibles',
+                                  ),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                            return;
+                          }
+
                           await ref
                               .read(cartProvider.notifier)
-                              .updateQuantity(cartItem, cartItem.quantity + 1);
+                              .updateQuantity(cartItem, newQuantity);
 
-                          ref.invalidate(cartItemsProvider);
-                          ref.invalidate(cartTotalProvider);
+                          // ✅ Validar que el widget aún está montado antes de invalidar
+                          if (context.mounted) {
+                            ref.invalidate(cartItemsProvider);
+                            ref.invalidate(cartTotalProvider);
+                          }
                         },
                         child: Container(
                           width: 24,

@@ -16,10 +16,28 @@ class OrderDataSourceImpl implements OrderDataSource {
   @override
   Future<void> createOrder(PurchaseOrder order) async {
     try {
-      await _firestore
-          .collection('orders')
-          .doc(order.id)
-          .set(order.toMap());
+      // Usar Firestore Batch para transacción atómica
+      final batch = _firestore.batch();
+      
+      // 1. Crear la orden con timestamp del servidor
+      final orderRef = _firestore.collection('orders').doc(order.id);
+      final orderData = order.toMap();
+      
+      // Reemplazar el DateTime local con el timestamp del servidor
+      orderData['createdAt'] = fb.FieldValue.serverTimestamp();
+      
+      batch.set(orderRef, orderData);
+      
+      // 2. Decrementar inventario para cada producto
+      for (final item in order.items) {
+        final productRef = _firestore.collection('products').doc(item.productId);
+        batch.update(productRef, {
+          'quantity': fb.FieldValue.increment(-item.quantity),
+        });
+      }
+      
+      // Ejecutar todas las operaciones en una transacción
+      await batch.commit();
       
       print('✅ Order created: ${order.id}');
     } catch (e) {

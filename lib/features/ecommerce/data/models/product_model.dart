@@ -11,6 +11,7 @@ class ProductModel {
   final String description;
   final List<String> sizes;
   final List<String> colors;
+  final int quantity;
 
   const ProductModel({
     required this.id,
@@ -21,6 +22,7 @@ class ProductModel {
     required this.description,
     required this.sizes,
     required this.colors,
+    required this.quantity,
   });
 
   /// Convert ProductModel (DTO) to Product (entity)
@@ -34,6 +36,7 @@ class ProductModel {
       description: description,
       sizes: sizes,
       colors: colors,
+      quantity: quantity,
     );
   }
 
@@ -48,6 +51,7 @@ class ProductModel {
       description: product.description,
       sizes: product.sizes,
       colors: product.colors,
+      quantity: product.quantity,
     );
   }
 }
