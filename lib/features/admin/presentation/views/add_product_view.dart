@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 
 import '../../../ecommerce/domain/entities/product.dart';
+import '../../../ecommerce/presentation/providers/product_provider.dart';
 import '../providers/admin_providers.dart';
 
 class AddProductView extends ConsumerStatefulWidget {
@@ -109,8 +110,9 @@ class _AddProductViewState extends ConsumerState<AddProductView> {
 
       if (!mounted) return;
       
-      // Invalidar para que se recarguen los productos
+      // Invalidar para que se recarguen los productos en admin y usuario
       ref.invalidate(adminAllProductsProvider);
+      ref.invalidate(allProductsProvider);
 
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Producto agregado exitosamente')),

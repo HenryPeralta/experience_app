@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../../../auth/presentation/providers/dependency_injection.dart';
 import '../../../auth/presentation/views/login_view.dart';
+import '../../../ecommerce/presentation/providers/product_provider.dart';
 import '../providers/admin_providers.dart';
 import 'add_product_view.dart';
 import 'edit_product_view.dart';
@@ -327,8 +328,9 @@ class AdminDashboardView extends ConsumerWidget {
           TextButton(
             onPressed: () async {
               await ref.read(deleteProductProvider)(productId);
-              // Invalidar el provider para refrescar la lista
+              // Invalidar providers para refrescar la lista en admin y usuario
               ref.invalidate(adminAllProductsProvider);
+              ref.invalidate(allProductsProvider);
               if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Eliminar'),
