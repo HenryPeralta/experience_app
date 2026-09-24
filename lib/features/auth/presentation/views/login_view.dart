@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:experience_app/features/admin/presentation/views/role_router_wrapper.dart';
+import 'package:experience_app/features/ecommerce/presentation/views/order_detail_view.dart';
 import '../providers/auth_provider.dart';
 
 class LoginView extends ConsumerStatefulWidget {
@@ -63,13 +65,31 @@ class _LoginViewState extends ConsumerState<LoginView> {
             ),
           );
 
-          // Navegar al RoleRouterWrapper que valida el rol
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => const RoleRouterWrapper(),
-            ),
-          );
+          // Chequear si hay un orderId pendiente (desde deep link de notificación)
+          SharedPreferences.getInstance().then((prefs) {
+            final pendingOrderId = prefs.getString('pending_order_id');
+            
+            if (pendingOrderId != null && pendingOrderId.isNotEmpty) {
+              // 🎯 Hay un orderId pendiente → navegar al detalle de la orden
+              debugPrint('✅ Navegando a orden pendiente: $pendingOrderId');
+              prefs.remove('pending_order_id'); // Limpiar después de usarlo
+              
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => OrderDetailView(orderId: pendingOrderId),
+                ),
+              );
+            } else {
+              // No hay orderId pendiente → navegar normal al RoleRouterWrapper
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RoleRouterWrapper(),
+                ),
+              );
+            }
+          });
         }
       },
     );

@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:experience_app/features/core/data/services/local_notification_service.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/cart_data_source.dart';
 import 'package:experience_app/features/ecommerce/data/datasources/local_cart_data_source.dart';
@@ -15,6 +16,7 @@ import 'package:experience_app/features/ecommerce/data/repositories/order_reposi
 import 'package:experience_app/features/ecommerce/domain/repositories/cart_repository.dart';
 import 'package:experience_app/features/ecommerce/domain/repositories/payment_repository.dart';
 import 'package:experience_app/features/ecommerce/domain/repositories/product_repository.dart';
+import 'package:experience_app/features/ecommerce/domain/entities/order.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/add_to_cart.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/clear_cart.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/get_all_products.dart';
@@ -26,6 +28,8 @@ import 'package:experience_app/features/ecommerce/domain/usecases/process_paymen
 import 'package:experience_app/features/ecommerce/domain/usecases/remove_from_cart.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/update_cart_quantity.dart';
 import 'package:experience_app/features/ecommerce/domain/usecases/create_order_use_case.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/get_order_by_id_use_case.dart';
+import 'package:experience_app/features/ecommerce/domain/usecases/get_user_orders_use_case.dart';
 
 // ========== Services ==========
 final localNotificationServiceProvider =
@@ -121,6 +125,35 @@ final orderRepositoryProvider = Provider<OrderRepository>((ref) {
 final createOrderProvider = Provider<CreateOrderUseCase>((ref) {
   final repository = ref.watch(orderRepositoryProvider);
   return CreateOrderUseCaseImpl(repository: repository);
+});
+
+final getOrderByIdProvider = Provider<GetOrderByIdUseCase>((ref) {
+  final repository = ref.watch(orderRepositoryProvider);
+  return GetOrderByIdUseCaseImpl(repository: repository);
+});
+
+final getUserOrdersProvider = Provider<GetUserOrdersUseCase>((ref) {
+  final repository = ref.watch(orderRepositoryProvider);
+  return GetUserOrdersUseCaseImpl(repository: repository);
+});
+
+// Provider para obtener una orden específica por ID (FutureProvider)
+final orderDetailProvider = FutureProvider.family<PurchaseOrder?, String>((ref, orderId) async {
+  final useCase = ref.watch(getOrderByIdProvider);
+  return useCase(orderId);
+});
+
+// Provider para obtener todas las órdenes del usuario (FutureProvider)
+final userOrdersProvider = FutureProvider<List<PurchaseOrder>>((ref) async {
+  final auth = FirebaseAuth.instance;
+  final userId = auth.currentUser?.uid;
+  
+  if (userId == null) {
+    return [];
+  }
+  
+  final useCase = ref.watch(getUserOrdersProvider);
+  return useCase(userId);
 });
 
 final processPaymentProvider = Provider<ProcessPayment>((ref) {

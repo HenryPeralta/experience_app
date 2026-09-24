@@ -7,6 +7,9 @@ import 'package:flutter/foundation.dart';
 class NotificationsService {
   static final instance = NotificationsService();
 
+  // Callback que se ejecuta cuando se toca una notificación desde background
+  static Function(String orderId)? onOrderNotificationTapped;
+
   NotificationsService({
     FirebaseMessaging? firebaseMessaging,
     FlutterLocalNotificationsPlugin? localNotifications,
@@ -76,9 +79,32 @@ class NotificationsService {
       // Escuchar mensajes en foreground
       FirebaseMessaging.onMessage.listen(_foregroundMessageHandler);
 
+      // Escuchar cuando se toca una notificación desde background/closed
+      FirebaseMessaging.onMessageOpenedApp.listen(_notificationTappedHandler);
+
       debugPrint('✅ Firebase Messaging inicializado');
     } catch (e) {
       debugPrint('❌ Error inicializando Firebase Messaging: $e');
+    }
+  }
+
+  /// Maneja cuando se toca una notificación desde background/closed
+  void _notificationTappedHandler(RemoteMessage message) {
+    try {
+      debugPrint('📲 Notificación tocada desde background: ${message.messageId}');
+      
+      // Obtener el orderId del payload
+      final orderId = message.data['sale_id'] ?? message.data['orderId'];
+      
+      if (orderId != null && orderId.isNotEmpty) {
+        debugPrint('🎯 Navegando al detalle de orden: $orderId');
+        // Llamar al callback si está definido
+        onOrderNotificationTapped?.call(orderId);
+      } else {
+        debugPrint('⚠️ No se encontró orderId en el payload');
+      }
+    } catch (e) {
+      debugPrint('❌ Error manejando notificación tocada: $e');
     }
   }
 
@@ -100,6 +126,13 @@ class NotificationsService {
         settings: initializationSettings,
         onDidReceiveNotificationResponse: (NotificationResponse response) {
           debugPrint('📲 Notificación local tocada: ${response.payload}');
+          
+          // Si hay payload (orderId), navegar al detalle
+          final orderId = response.payload;
+          if (orderId != null && orderId.isNotEmpty) {
+            debugPrint('🎯 Navegando al detalle de orden desde notificación local: $orderId');
+            onOrderNotificationTapped?.call(orderId);
+          }
         },
       );
 

@@ -52,10 +52,10 @@ def notify_user_after_purchase(event: firestore_fn.Event[firestore_fn.DocumentSn
                     body=f"Tu orden #{order_id_short} por €{order_total} ha sido confirmada",
                 ),
                 data={
+                    "sale_id": order_snapshot.id,  # ✅ Para deep linking a OrderDetailView
                     "feature": "order_details",
-                    "order_id": order_snapshot.id,
                     "total": str(order_total),
-                    "status": order.get("status", "pending"),
+                    "status": order.get("status", "completed"),
                 },
                 token=device_token,
             )

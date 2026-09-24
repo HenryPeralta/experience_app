@@ -120,7 +120,7 @@ class CheckoutNotifier extends StateNotifier<CheckoutState> {
         userId: user.uid,
         items: orderItems,
         total: total,
-        status: 'pending',
+        status: 'completed', // ✅ La compra ya fue procesada exitosamente
         createdAt: DateTime.now(),
         shippingAddress: 'Default Address', // TODO: obtener dirección real
         paymentMethod: 'credit_card',
