@@ -25,6 +25,7 @@ class FirestoreProductDataSourceImpl implements FirestoreProductDataSource {
       'image': product.image,
       'sizes': product.sizes,
       'colors': product.colors,
+      'quantity': product.quantity,
       'createdAt': FieldValue.serverTimestamp(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
