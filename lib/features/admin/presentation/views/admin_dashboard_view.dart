@@ -325,9 +325,11 @@ class AdminDashboardView extends ConsumerWidget {
             child: const Text('Cancelar'),
           ),
           TextButton(
-            onPressed: () {
-              ref.read(deleteProductProvider)(productId);
-              Navigator.pop(context);
+            onPressed: () async {
+              await ref.read(deleteProductProvider)(productId);
+              // Invalidar el provider para refrescar la lista
+              ref.invalidate(adminAllProductsProvider);
+              if (context.mounted) Navigator.pop(context);
             },
             child: const Text('Eliminar'),
           ),
